@@ -2,9 +2,9 @@ pub use serde_json::Value;
 pub use std::collections::HashMap;
 
 #[derive(Debug)]
-pub struct TryParseAnywayError<T> {
-    pub partial_retrieved: Option<T>,
-    pub errors: HashMap<&'static str, TryParseAnywayErrorItem>,
+pub enum TryParseAnywayError<T> {
+    Total(String),
+    Partial { retrieved: T, errors: HashMap < & 'static str, TryParseAnywayErrorItem > },
 }
 
 #[derive(Debug)]

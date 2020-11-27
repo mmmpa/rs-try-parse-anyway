@@ -1,20 +1,15 @@
-#![allow(warnings)]
-
 use proc_macro;
-use proc_macro::{TokenStream, TokenTree};
+use proc_macro::{TokenStream};
 use quote::{format_ident, quote};
-use serde::{Deserialize, Serialize};
-use syn::spanned::Spanned;
-use syn::{parse_macro_input, Data, DeriveInput, Fields, Type};
+use syn::{parse_macro_input, Data, DeriveInput, Type};
 
 #[derive(Clone)]
 struct Field<'a> {
     key: String,
-    class: String,
     ty: &'a Type,
 }
 
-#[proc_macro_derive(TryParseAnything)]
+#[proc_macro_derive(TryParseAnyway)]
 pub fn try_parse_anyway(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
 
@@ -22,21 +17,10 @@ pub fn try_parse_anyway(input: TokenStream) -> TokenStream {
 
     match &input.data {
         Data::Struct(data) => {
-            match &data.fields {
-                Fields::Named(fields) => {
-                    fields.named.iter().for_each(|field| {
-                        let name = &field.ident.clone().unwrap();
-                    });
-                }
-                Fields::Unnamed(_) => {}
-                Fields::Unit => {}
-            }
-
             data.fields.iter().for_each(|field| match &field.ty {
-                Type::Path(x) => {
+                Type::Path(_) => {
                     fields.push(Field {
                         key: field.ident.as_ref().unwrap().to_string(),
-                        class: "".to_string(),
                         ty: &field.ty,
                     });
                 }
@@ -48,13 +32,12 @@ pub fn try_parse_anyway(input: TokenStream) -> TokenStream {
 
     let base = input.ident.to_string();
     let struct_name = format_ident!("{}", base);
-    let value_name = format_ident!("{}RetrievalValue", base);
 
     let mut keys = vec![];
     let mut keys_str = vec![];
     let mut tyss = vec![];
 
-    let value_fields_raw = fields.iter().for_each(|Field { key, class, ty }| {
+    fields.iter().for_each(|Field { key, ty }| {
         keys.push(format_ident!("{}", key));
         keys_str.push(key);
         tyss.push(ty);
@@ -62,7 +45,7 @@ pub fn try_parse_anyway(input: TokenStream) -> TokenStream {
 
     let gen = quote! {
         impl #struct_name {
-            pub fn try_parse_anything(data: &[u8]) -> Result<Self, TryParseAnywayError<#struct_name>> {
+            pub fn try_parse_anyway(data: &[u8]) -> Result<Self, TryParseAnywayError<#struct_name>> {
                 #[derive(Deserialize, Default)]
                 #[serde(default)]
                 struct PartialValue {
@@ -72,16 +55,7 @@ pub fn try_parse_anyway(input: TokenStream) -> TokenStream {
                 let mut errors = HashMap::new();
                 let v: PartialValue = match serde_json::from_slice(data) {
                     Ok(x) => x,
-                    Err(e) => {
-                        errors.insert("_", TryParseAnywayErrorItem {
-                            value: Value::Null,
-                            error: e.to_string(),
-                        });
-                        return Err(TryParseAnywayError {
-                        partial_retrieved: None,
-                        errors
-                    });
-                    },
+                    Err(e) => return Err(TryParseAnywayError::Total(e.to_string())),
                 };
 
                 #(
@@ -97,15 +71,15 @@ pub fn try_parse_anyway(input: TokenStream) -> TokenStream {
                     };
                 )*
 
-                let created = Self {
+                let retrieved = Self {
                     #(#keys),*
                 };
 
                 if errors.is_empty() {
-                    Ok(created)
+                    Ok(retrieved)
                 } else {
-                    Err(TryParseAnywayError {
-                        partial_retrieved: Some(created),
+                    Err(TryParseAnywayError::Partial {
+                        retrieved,
                         errors
                     })
                 }

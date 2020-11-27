@@ -1,0 +1,7 @@
+[workspace]
+
+members = [
+    "try-parse-anyway",
+    "try-parse-anyway-proc-macro",
+    "try-parse-anyway-type",
+]
