@@ -1,0 +1,14 @@
+[package]
+name = "try-parse-anyway"
+version = "0.1.0"
+authors = ["mmmpa <mmmpa.mmmpa@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+serde = { version = "1.0.117", features = ["derive"] }
+serde_json = "1.0.59"
+
+try-parse-anyway-type = { path = "../try-parse-anyway-type" }
+try-parse-anyway-proc-macro = { path = "../try-parse-anyway-proc-macro" }
