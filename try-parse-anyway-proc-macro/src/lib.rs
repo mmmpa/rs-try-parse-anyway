@@ -45,7 +45,7 @@ pub fn try_parse_anyway(input: TokenStream) -> TokenStream {
 
     let gen = quote! {
         impl #struct_name {
-            pub fn try_parse_anyway(data: &[u8]) -> Result<Self, TryParseAnywayError<#struct_name>> {
+            pub fn try_from_slice_anyway(data: &[u8]) -> Result<Self, TryParseAnywayError<#struct_name>> {
                 #[derive(Deserialize, Default)]
                 #[serde(default)]
                 struct PartialValue {
@@ -84,8 +84,70 @@ pub fn try_parse_anyway(input: TokenStream) -> TokenStream {
                     })
                 }
             }
+
+            pub fn try_from_str_anyway(data: &str) -> Result<Self, TryParseAnywayError<#struct_name>> {
+                #struct_name::try_from_slice_anyway(data.as_bytes())
+            }
+
+            pub fn try_from_value_anyway(data: Value) -> Result<Self, TryParseAnywayError<#struct_name>> {
+                #[derive(Deserialize, Default)]
+                #[serde(default)]
+                struct PartialValue {
+                    #(pub #keys: Value),*
+                }
+
+                let mut errors = HashMap::new();
+                let v: PartialValue = match serde_json::from_value(data) {
+                    Ok(x) => x,
+                    Err(e) => return Err(TryParseAnywayError::Total(e.to_string())),
+                };
+
+                #(
+                    let #keys: #tyss = match serde_json::from_value(v.#keys.clone()) {
+                        Ok(x) => x,
+                        Err(e) => {
+                            errors.insert(#keys_str, TryParseAnywayErrorItem {
+                                value: v.#keys,
+                                error: e.to_string(),
+                            });
+                            Default::default()
+                        },
+                    };
+                )*
+
+                let retrieved = Self {
+                    #(#keys),*
+                };
+
+                if errors.is_empty() {
+                    Ok(retrieved)
+                } else {
+                    Err(TryParseAnywayError::Partial {
+                        retrieved,
+                        errors
+                    })
+                }
+            }
         }
-    };
+
+        impl TryIntoAnyway<#struct_name> for &[u8] {
+            fn try_into_anyway(self) ->  Result<#struct_name, TryParseAnywayError<#struct_name>> {
+                #struct_name::try_from_slice_anyway(self)
+            }
+        }
+
+        impl TryIntoAnyway<#struct_name> for &str {
+            fn try_into_anyway(self) ->  Result<#struct_name, TryParseAnywayError<#struct_name>> {
+                #struct_name::try_from_str_anyway(self)
+            }
+        }
+
+        impl TryIntoAnyway<#struct_name> for Value {
+            fn try_into_anyway(self) ->  Result<#struct_name, TryParseAnywayError<#struct_name>> {
+                #struct_name::try_from_value_anyway(self)
+            }
+        }
+   };
 
     // println!("{}", gen);
 

@@ -12,3 +12,7 @@ pub struct TryParseAnywayErrorItem {
     pub value: Value,
     pub error: String,
 }
+
+pub trait TryIntoAnyway<T> {
+    fn try_into_anyway(self) ->  Result<T, TryParseAnywayError<T>>;
+}

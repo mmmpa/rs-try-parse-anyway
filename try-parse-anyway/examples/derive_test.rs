@@ -21,15 +21,17 @@ fn main() {
         pub c: String,
     }
 
-    let re = C::try_parse_anyway("abc".as_bytes());
+    let re = C::try_from_slice_anyway("abc".as_bytes());
 
     println!("{:?}", re);
 
-    let re = C::try_parse_anyway(r#"{ "a": "a" }"#.as_bytes());
+    let re = C::try_from_str_anyway(r#"{ "a": "a" }"#);
 
     println!("{:?}", re.unwrap_err());
 
-    let re = C::try_parse_anyway(r#"{ "a": "a", "b": "b", "c": "c" }"#.as_bytes());
+    let re = C::try_from_value_anyway(
+        serde_json::from_str(r#"{ "a": "a", "b": "b", "c": "c" }"#).unwrap(),
+    );
 
     println!("{:?}", re.unwrap());
 
@@ -40,7 +42,7 @@ fn main() {
         pub c: String,
     }
 
-    let re = Types::try_parse_anyway(r#"{ "a": ["a"], "b": 1, "c": "c" }"#.as_bytes());
+    let re = Types::try_from_slice_anyway(r#"{ "a": ["a"], "b": 1, "c": "c" }"#.as_bytes());
 
     println!("{:?}", re.unwrap());
 }
