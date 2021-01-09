@@ -4,7 +4,7 @@ pub use std::collections::HashMap;
 #[derive(Debug)]
 pub enum TryParseAnywayError<T> {
     Total(String),
-    Partial { retrieved: T, errors: HashMap < & 'static str, TryParseAnywayErrorItem > },
+    Partial { retrieved: T, errors: HashMap<&'static str, TryParseAnywayErrorItem> },
 }
 
 #[derive(Debug)]
@@ -13,6 +13,6 @@ pub struct TryParseAnywayErrorItem {
     pub error: String,
 }
 
-pub trait TryIntoAnyway<T> {
-    fn try_into_anyway(self) ->  Result<T, TryParseAnywayError<T>>;
+pub trait ParseAnyway<T> {
+    fn parse_anyway(self) -> Result<T, TryParseAnywayError<T>>;
 }

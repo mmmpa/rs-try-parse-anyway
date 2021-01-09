@@ -130,20 +130,20 @@ pub fn try_parse_anyway(input: TokenStream) -> TokenStream {
             }
         }
 
-        impl TryIntoAnyway<#struct_name> for &[u8] {
-            fn try_into_anyway(self) ->  Result<#struct_name, TryParseAnywayError<#struct_name>> {
+        impl ParseAnyway<#struct_name> for &[u8] {
+            fn parse_anyway(self) ->  Result<#struct_name, TryParseAnywayError<#struct_name>> {
                 #struct_name::try_from_slice_anyway(self)
             }
         }
 
-        impl TryIntoAnyway<#struct_name> for &str {
-            fn try_into_anyway(self) ->  Result<#struct_name, TryParseAnywayError<#struct_name>> {
+        impl ParseAnyway<#struct_name> for &str {
+            fn parse_anyway(self) ->  Result<#struct_name, TryParseAnywayError<#struct_name>> {
                 #struct_name::try_from_str_anyway(self)
             }
         }
 
-        impl TryIntoAnyway<#struct_name> for Value {
-            fn try_into_anyway(self) ->  Result<#struct_name, TryParseAnywayError<#struct_name>> {
+        impl ParseAnyway<#struct_name> for Value {
+            fn parse_anyway(self) ->  Result<#struct_name, TryParseAnywayError<#struct_name>> {
                 #struct_name::try_from_value_anyway(self)
             }
         }
